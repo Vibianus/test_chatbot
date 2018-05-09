@@ -60,60 +60,61 @@ def webhook():
     if data["object"] == "page":
 
         for entry in data["entry"]:
-            for messaging_event in entry["messaging"]:
+            if "messaging" in entry :
+                for messaging_event in entry["messaging"]:
 
-                if messaging_event.get("message"):  # someone sent us a message
+                    if messaging_event.get("message"):  # someone sent us a message
 
-                    sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
-                    recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
-                    if "text" in messaging_event["message"] :
-                        message_text = messaging_event["message"]["text"]  # the message's text
-                        message_text = message_text.encode('utf-8').lower()
+                        sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
+                        recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
+                        if "text" in messaging_event["message"] :
+                            message_text = messaging_event["message"]["text"]  # the message's text
+                            message_text = message_text.encode('utf-8').lower()
 
-                        # dorm internet workflow
-                        if "quick_reply" in messaging_event["message"] :
-                            payload = messaging_event["message"]["quick_reply"]["payload"]
-                            if payload == 'GOT_IT' :
-                                send_message( sender_id, '很高興能為你幫上忙🙂' )
-                            elif payload == 'ROLL_BACK' :
-                                faq = template_json.Template_json(sender_id,template_type=2,
-                                      text="是否曾申請過帳號呢? (請用是/否按扭回答以便記錄)", payload_yes = "START_STATE_YES", payload_no = "START_STATE_NO" )
-                                send_template_message( faq )
+                            # dorm internet workflow
+                            if "quick_reply" in messaging_event["message"] :
+                                payload = messaging_event["message"]["quick_reply"]["payload"]
+                                if payload == 'GOT_IT' :
+                                    send_message( sender_id, '很高興能為你幫上忙🙂' )
+                                elif payload == 'ROLL_BACK' :
+                                    faq = template_json.Template_json(sender_id,template_type=2,
+                                          text="是否曾申請過帳號呢? (請用是/否按扭回答以便記錄)", payload_yes = "START_STATE_YES", payload_no = "START_STATE_NO" )
+                                    send_template_message( faq )
+                                else :
+                                    reply = set_temp(payload, sender_id)
+                                    send_template_message( reply )
+
                             else :
-                                reply = set_temp(payload, sender_id)
-                                send_template_message( reply )
+                                reply = handle_message( message_text, sender_id )
 
-                        else :
-                            reply = handle_message( message_text, sender_id )
+                                for key in user_dict.keys() :
+                                    print(key)
+                                    print(user_dict[key])
 
-                            for key in user_dict.keys() :
-                                print(key)
-                                print(user_dict[key])
+                                if not sender_id in user_dict : # not in time interval
+                                    #暫時拿掉限制
+                                    #if reply == '抱歉> < 我還無法處理這個問題，請您等待專人為您回答🙂 ' : user_dict[sender_id] = time.time() #使用者待專人回答, chatbot對該使用者暫停
+                                    if type(reply) == str :
+                                        send_message( sender_id, reply )
+                                    else : #template
+                                        send_template_message(reply)
+                                pass
 
-                            if not sender_id in user_dict : # not in time interval
-                                #暫時拿掉限制
-                                #if reply == '抱歉> < 我還無法處理這個問題，請您等待專人為您回答🙂 ' : user_dict[sender_id] = time.time() #使用者待專人回答, chatbot對該使用者暫停
-                                if type(reply) == str :
-                                    send_message( sender_id, reply )
-                                else : #template
-                                    send_template_message(reply)
-                            pass
+                    if messaging_event.get("delivery"):  # delivery confirmation
+                        pass
 
-                if messaging_event.get("delivery"):  # delivery confirmation
-                    pass
+                    if messaging_event.get("optin"):  # optin confirmation
+                        pass
 
-                if messaging_event.get("optin"):  # optin confirmation
-                    pass
-
-                if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
-                    recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
-                    message_text = messaging_event["postback"]["payload"]  # the message's text
-                    message_text = message_text.encode('utf-8').lower()
-                    reply = handle_message( message_text, sender_id )
-                    if not sender_id in user_dict : # not in time interval
-                        user_dict[sender_id] = time.time()
-                        send_message( sender_id, reply )
+                    if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
+                        sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
+                        recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
+                        message_text = messaging_event["postback"]["payload"]  # the message's text
+                        message_text = message_text.encode('utf-8').lower()
+                        reply = handle_message( message_text, sender_id )
+                        if not sender_id in user_dict : # not in time interval
+                            user_dict[sender_id] = time.time()
+                            send_message( sender_id, reply )
 
     return "ok", 200
 
