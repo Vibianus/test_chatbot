@@ -126,7 +126,7 @@ def handle_message(message_text, sender_id):
         return '請您等待專人為您回答🙂  '
 
 
-    if u'你好'.encode("utf8") in message_text or u'請問'.encode("utf8") in message_text or u'嗨'.encode("utf8") in message_text or u'哈囉'.encode("utf8") in message_text or 'hi' in message_text or 'hello' in message_text:
+    if '你好' in message_text or '請問' in message_text or '嗨' in message_text or '哈囉' in message_text or 'hi' in message_text or 'hello' in message_text:
         if len(message_text ) < 10:
             return '你好！🙂\n請問我能為您做些什麼？ '
     # Email
