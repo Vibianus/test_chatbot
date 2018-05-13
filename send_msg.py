@@ -2,6 +2,7 @@
 import os
 import sys
 import requests
+import json
 def sendtofb(data): #send json to facebook
     params = {
         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
